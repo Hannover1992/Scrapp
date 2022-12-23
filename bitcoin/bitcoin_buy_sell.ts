@@ -46,6 +46,7 @@ function get_URL() {
                     priceDivs.map(async (div) => {
                         const spanText = await page.evaluate((element) => {
                             const span = element.querySelector('span[automation-id="buy-sell-button-rate-value"]');
+                            //toDo: check if the button ist disabled
                             return span ? span.textContent : null;
                         }, div);
                         return spanText;
