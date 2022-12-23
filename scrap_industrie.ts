@@ -16,14 +16,21 @@ let puppeteer = require('puppeteer-extra');
     console.log('wait for 1 second');
     await page.waitForTimeout(1000);
     console.log('wait for selector on the page');
-    //find all divs with class price
-    const priceDivs = await page.$$('div.price');
-    console.log('priceDivs', priceDivs);
-    //for all element hanlde output the text
-    for (let i = 0; i < priceDivs.length; i++) {
-        const priceDiv = priceDivs[i];
-        const price = await page.evaluate(priceDiv => priceDiv.textContent, priceDiv);
-        console.log('price', price);
+
+    async function get_price() {
+        const priceDivs = await page.$$('div.price');
+        console.log('priceDivs', priceDivs);
+        //for all element hanlde output the text
+        for (let i = 0; i < priceDivs.length; i++) {
+            const priceDiv = priceDivs[i];
+            const price = await page.evaluate(priceDiv => priceDiv.textContent, priceDiv);
+            console.log('price', price);
+        }
+    }
+
+//find all divs with class price
+    while(true) {
+        await get_price();
     }
 
     //
