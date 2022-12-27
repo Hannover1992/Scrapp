@@ -43,13 +43,12 @@ function get_URL() {
         etoroUrlArr.map(async (etoroUrl) => {
             const {page, priceDivs} = await get_the_div_with_price(browser, etoroUrl);
 
-            function convert_to_float(price: Awaited<string>[]) {
-                return price.map((price) => parseFloat(price));
+            function convert_to_float(prices: any) {
+                return prices.map((price) => parseFloat(price));
             }
 
-            // Extract the text content of the span elements
-            while(true) {
-                const prices = await Promise.all(
+            async function get_price() {
+                const buy_sell_string = await Promise.all(
                     priceDivs.map(async (div) => {
                         const spanText = await page.evaluate((element) => {
                             const span = element.querySelector('span[automation-id="buy-sell-button-rate-value"]');
@@ -59,9 +58,21 @@ function get_URL() {
                         return spanText;
                     }),
                 );
+                return buy_sell_string;
+            }
+
+// Extract the text content of the span elements
+            while(true) {
+                let prices = await get_price();
+                let prices_float: number[];
+
+                prices_float = convert_to_float(prices);
+                let buy_price = prices_float[0];
+                let sell_price = prices_float[1];
 
                 //console log the url and the price
                 console.log(etoroUrl, prices);
+                console.log(etoroUrl, prices_float);
                 await page.waitForTimeout(1000);
             }
         }),
@@ -69,6 +80,7 @@ function get_URL() {
 
     await browser.close();
 })();
+
 async function setUpWebBrowser(): Promise<Browser> {
     const StealthPlugin = require('puppeteer-extra-plugin-stealth');
     let puppeteer = require('puppeteer-extra');
