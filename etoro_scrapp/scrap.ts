@@ -1,6 +1,5 @@
 import {Browser, Page} from "puppeteer";
-import puppeteer from "puppeteer";
-import { PrismaClient } from '@prisma/client'
+import {PrismaClient} from '@prisma/client'
 
 async function get_the_div_with_price(browser: Browser, etoroUrl: string) {
     const page = await browser.newPage();
@@ -17,6 +16,56 @@ function concatinate_e_toro_url_and_stocks(stock: string[]) {
     return stock.map(metal => etoroUrl + metal + chart);
 }
 
+enum assetType
+{
+    precious_metal,
+        raw_material,
+        grow,
+        value,
+        bond,
+        reit,
+        crypto
+}
+class Details {
+    name: string;
+    assetType: assetType;
+    exchange: string;
+
+    //construct the detail object default for string = "" and enum = 0
+    constructor(name: string = "", assetType: assetType = 0, exchange: string = "") {
+        this.name = name;
+        this.assetType = assetType;
+        this.exchange = exchange;
+    }
+
+}
+
+//
+class Stock {
+    symbol: string;
+    detail: Details;
+    url: string;
+    buy: number;
+    sell: number;
+
+    //construct the stock object default for string = "" and enum = 0
+    constructor(symbol: string = "", detail: Details = new Details(), url: string = "", buy: number = 0, sell: number = 0) {
+        this.symbol = symbol;
+        this.detail = detail;
+        this.url = this.generate_url();
+        this.buy = buy;
+        this.sell = sell;
+    }
+
+    generate_url() {
+        let etoroUrl = 'https://www.etoro.com/markets/';
+        const chart = '/chart';
+        return etoroUrl + this.symbol + chart;
+    }
+
+}
+
+
 function get_URL() {
     function precius_metal_shorts() {
         const gold = ['phys', 'gdxj'];
@@ -31,7 +80,17 @@ function get_URL() {
     return precious_metal_URL;
 }
 
+
 (async () => {
+    let phys: Stock = new Stock (
+        'phys',
+        new Details(
+            '',
+            assetType.precious_metal,
+            'PHYS'
+        ),
+    )
+
     let etoroUrlArr = get_URL();
 
     // Add stealth plugin and use defaults (all tricks to hide puppeteer usage)
