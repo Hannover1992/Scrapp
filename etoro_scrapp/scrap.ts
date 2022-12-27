@@ -1,5 +1,6 @@
 import {Browser, Page} from "puppeteer";
 import puppeteer from "puppeteer";
+import { PrismaClient } from '@prisma/client'
 
 async function get_the_div_with_price(browser: Browser, etoroUrl: string) {
     const page = await browser.newPage();
@@ -35,11 +36,17 @@ function get_URL() {
 
     // Add stealth plugin and use defaults (all tricks to hide puppeteer usage)
     const browser = await setUpWebBrowser();
+    const prisma = new PrismaClient()
 
     // Use Promise.all to make the loop async
     await Promise.all(
         etoroUrlArr.map(async (etoroUrl) => {
             const {page, priceDivs} = await get_the_div_with_price(browser, etoroUrl);
+
+            function convert_to_float(price: Awaited<string>[]) {
+                return price.map((price) => parseFloat(price));
+            }
+
             // Extract the text content of the span elements
             while(true) {
                 const prices = await Promise.all(
