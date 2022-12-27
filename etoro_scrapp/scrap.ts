@@ -82,14 +82,21 @@ function get_URL() {
 
 
 (async () => {
-    let phys: Stock = new Stock (
-        'phys',
-        new Details(
-            '',
-            assetType.precious_metal,
-            'PHYS'
-        ),
-    )
+
+    function generate_gold() {
+        let gold: Stock [] = [];
+        let phys: Stock = new Stock ( 'PHYS',
+            new Details( '', assetType.precious_metal )
+        );
+        let gdxj: Stock = new Stock ( 'GDXJ',
+            new Details( '', assetType.precious_metal)
+        );
+        gold.push(phys, gdxj);
+        return gold;
+    }
+
+    let gold: Stock[] =  generate_gold();
+
 
     let etoroUrlArr = get_URL();
 
