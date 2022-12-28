@@ -124,7 +124,6 @@ function get_URL() {
             this.something_else = "something_else";
         }
 
-
         flattenObject() {
             const values = Object.values(this).flat(Infinity);
             return values.filter(val => val instanceof Stock || typeof val === 'object').map(val => {
@@ -135,63 +134,58 @@ function get_URL() {
                 }
             });
         }
+
+        async save_stocks_to_db() {
+            let all_stocks = this.flattenObject()[0];
+            let browser = await setUpWebBrowser();
+            let prisma = new PrismaClient()
+
+            // Use Promise.all to make the loop async
+            await Promise.all(
+                all_stocks.map(async (stock) => {
+                    const {page, priceDivs} = await get_the_div_with_price(browser, stock.url);
+
+                    while (true) {
+                        let prices = await get_price(page, priceDivs);
+                        let prices_float: number[];
+
+                        prices_float = convert_to_float(prices);
+                        let buy_price = prices_float[0];
+                        let sell_price = prices_float[1];
+
+                        //console log the url and the price
+                        console.log(stock.url, prices_float);
+                        await page.waitForTimeout(1000);
+                    }
+
+
+                    async function get_price(page, priceDivs) {
+                        const buy_sell_string = await Promise.all(
+                            priceDivs.map(async (div) => {
+                                const spanText = await page.evaluate((element) => {
+                                    const span = element.querySelector('span[automation-id="buy-sell-button-rate-value"]');
+                                    //toDo: check if the button ist disabled
+                                    return span ? span.textContent : null;
+                                }, div);
+                                return spanText;
+                            }),
+                        );
+                        return buy_sell_string;
+                    }
+
+                    function convert_to_float(prices: any) {
+                        return prices.map((price) => parseFloat(price));
+                    }
+                }),
+            );
+
+            await browser.close();
+        }
     }
 
     let market = new Market();
-    const stocks = market.flattenObject();
+    market.save_stocks_to_db();
 
-
-    // let all_stocks: any[] = [];
-    // all_stocks = all_stocks.concat(gold, silver);
-    let all_stocks = stocks;
-    all_stocks = all_stocks[0];
-    console.log(all_stocks);
-
-    // Add stealth plugin and use defaults (all tricks to hide puppeteer usage)
-    const browser = await setUpWebBrowser();
-    const prisma = new PrismaClient()
-
-    // Use Promise.all to make the loop async
-    await Promise.all(
-        all_stocks.map(async (stock) => {
-            const {page, priceDivs} = await get_the_div_with_price(browser, stock.url);
-
-            while(true) {
-                let prices = await get_price(page, priceDivs);
-                let prices_float: number[];
-
-                prices_float = convert_to_float(prices);
-                let buy_price = prices_float[0];
-                let sell_price = prices_float[1];
-
-                //console log the url and the price
-                console.log(stock.url, prices);
-                console.log(stock.url, prices_float);
-                await page.waitForTimeout(1000);
-            }
-
-
-            async function get_price(page, priceDivs) {
-                const buy_sell_string = await Promise.all(
-                    priceDivs.map(async (div) => {
-                        const spanText = await page.evaluate((element) => {
-                            const span = element.querySelector('span[automation-id="buy-sell-button-rate-value"]');
-                            //toDo: check if the button ist disabled
-                            return span ? span.textContent : null;
-                        }, div);
-                        return spanText;
-                    }),
-                );
-                return buy_sell_string;
-            }
-
-            function convert_to_float(prices: any) {
-                return prices.map((price) => parseFloat(price));
-            }
-        }),
-    );
-
-    await browser.close();
 })();
 
 async function setUpWebBrowser(): Promise<Browser> {
