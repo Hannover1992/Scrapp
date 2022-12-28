@@ -104,13 +104,47 @@ function get_URL() {
         return gold;
     }
 
-    let all_stocks: Stock [] = [];
 
     let gold: Stock[] =  generate_gold();
     let silver: Stock[] = generate_silver();
 
-    all_stocks = all_stocks.concat(gold, silver);
 
+    class Precious_Metal {
+        gold: Stock[] =  generate_gold();
+        silver: Stock[] = generate_silver();
+    }
+
+    class Market {
+        precious_metal: Precious_Metal ;
+        something_else;
+
+        //constructor
+        constructor() {
+            this.precious_metal = new Precious_Metal();
+            this.something_else = "something_else";
+        }
+
+
+        flattenObject() {
+            const values = Object.values(this).flat(Infinity);
+            return values.filter(val => val instanceof Stock || typeof val === 'object').map(val => {
+                if (val instanceof Stock) {
+                    return val;
+                } else {
+                    return this.flattenObject.call(val);
+                }
+            });
+        }
+    }
+
+    let market = new Market();
+    const stocks = market.flattenObject();
+
+
+    // let all_stocks: any[] = [];
+    // all_stocks = all_stocks.concat(gold, silver);
+    let all_stocks = stocks;
+    all_stocks = all_stocks[0];
     console.log(all_stocks);
 
     // Add stealth plugin and use defaults (all tricks to hide puppeteer usage)
@@ -122,11 +156,22 @@ function get_URL() {
         all_stocks.map(async (stock) => {
             const {page, priceDivs} = await get_the_div_with_price(browser, stock.url);
 
-            function convert_to_float(prices: any) {
-                return prices.map((price) => parseFloat(price));
+            while(true) {
+                let prices = await get_price(page, priceDivs);
+                let prices_float: number[];
+
+                prices_float = convert_to_float(prices);
+                let buy_price = prices_float[0];
+                let sell_price = prices_float[1];
+
+                //console log the url and the price
+                console.log(stock.url, prices);
+                console.log(stock.url, prices_float);
+                await page.waitForTimeout(1000);
             }
 
-            async function get_price() {
+
+            async function get_price(page, priceDivs) {
                 const buy_sell_string = await Promise.all(
                     priceDivs.map(async (div) => {
                         const spanText = await page.evaluate((element) => {
@@ -140,19 +185,8 @@ function get_URL() {
                 return buy_sell_string;
             }
 
-// Extract the text content of the span elements
-            while(true) {
-                let prices = await get_price();
-                let prices_float: number[];
-
-                prices_float = convert_to_float(prices);
-                let buy_price = prices_float[0];
-                let sell_price = prices_float[1];
-
-                //console log the url and the price
-                console.log(stock.url, prices);
-                console.log(stock.url, prices_float);
-                await page.waitForTimeout(1000);
+            function convert_to_float(prices: any) {
+                return prices.map((price) => parseFloat(price));
             }
         }),
     );
