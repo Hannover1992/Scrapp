@@ -138,7 +138,6 @@ function get_URL() {
         async save_stocks_to_db() {
             let all_stocks = this.flattenObject()[0];
             let browser = await setUpWebBrowser();
-            let prisma = new PrismaClient()
 
             // Use Promise.all to make the loop async
             await Promise.all(
@@ -153,9 +152,42 @@ function get_URL() {
                         let buy_price = prices_float[0];
                         let sell_price = prices_float[1];
 
+                        let prisma = new PrismaClient();
+                        const price = await prisma.price.create({
+                            data: {
+                                Buy: buy_price,
+                                Sell: sell_price,
+                                industry: {
+                                    connectOrCreate: {
+                                        where: {
+                                            Symbol: stock.symbol
+                                        },
+                                        create: {
+                                            Symbol: stock.symbol,
+                                            Name: stock.detail.name,
+                                            Exchange: assetType[stock.detail.assetType],
+                                        }
+                                    }
+                                },
+                            }
+                        });
+                        // const industry = await prisma.industry.create({
+                        //     data: {
+                        //         Symbol: stock.symbol,
+                        //         Name: stock.detail.name,
+                        //         Exchange: stock.detail.exchange,
+                        //         price : {
+                        //             create: {
+                        //                 Buy: buy_price,
+                        //                 Sell: sell_price,
+                        //             }
+                        //         }
+                        //     }
+                        // });
+                        console.log(price);
                         //console log the url and the price
-                        console.log(stock.url, prices_float);
-                        await page.waitForTimeout(1000);
+                        // console.log(stock.url, prices_float);
+                        await page.waitForTimeout(60 *  1000);
                     }
 
 
