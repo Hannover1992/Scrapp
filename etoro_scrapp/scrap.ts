@@ -83,6 +83,15 @@ function get_URL() {
 
 (async () => {
 
+    function generate_silver() {
+        let silver: Stock [] = [];
+        let pslv: Stock = new Stock('PSLV',
+            new Details('', assetType.precious_metal)
+        );
+        silver.push(pslv);
+        return silver;
+    }
+
     function generate_gold() {
         let gold: Stock [] = [];
         let phys: Stock = new Stock ( 'PHYS',
@@ -95,10 +104,14 @@ function get_URL() {
         return gold;
     }
 
+    let all_stocks: Stock [] = [];
+
     let gold: Stock[] =  generate_gold();
+    let silver: Stock[] = generate_silver();
 
+    all_stocks = all_stocks.concat(gold, silver);
 
-    let etoroUrlArr = get_URL();
+    console.log(all_stocks);
 
     // Add stealth plugin and use defaults (all tricks to hide puppeteer usage)
     const browser = await setUpWebBrowser();
@@ -106,8 +119,8 @@ function get_URL() {
 
     // Use Promise.all to make the loop async
     await Promise.all(
-        etoroUrlArr.map(async (etoroUrl) => {
-            const {page, priceDivs} = await get_the_div_with_price(browser, etoroUrl);
+        all_stocks.map(async (stock) => {
+            const {page, priceDivs} = await get_the_div_with_price(browser, stock.url);
 
             function convert_to_float(prices: any) {
                 return prices.map((price) => parseFloat(price));
@@ -137,8 +150,8 @@ function get_URL() {
                 let sell_price = prices_float[1];
 
                 //console log the url and the price
-                console.log(etoroUrl, prices);
-                console.log(etoroUrl, prices_float);
+                console.log(stock.url, prices);
+                console.log(stock.url, prices_float);
                 await page.waitForTimeout(1000);
             }
         }),
