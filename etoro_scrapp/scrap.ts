@@ -6,7 +6,7 @@ async function get_the_div_with_price(browser: Browser, etoroUrl: string) {
     await navigateToUrl(etoroUrl, page);
     // Find all divs with class price
     const priceDivs = await page.$$('div.etoro-price-value');
-    return {page, priceDivs};
+    return {page, priceDivs};//something
 }
 
 // concatinate_e_toro_url_and_stocks(etorourl, precious_metal)
